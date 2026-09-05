@@ -117,9 +117,15 @@ jobs:
         run: kube-linter lint rendered-manifests.yaml
 
   server-dry-run:
+    # Verifies the manifest is acceptable to a REAL apiserver
+    # (unlike client-side `helm install --dry-run`, which never
+    # contacts a cluster and therefore cannot catch server-side
+    # validation errors — missing CRDs, admission webhooks).
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    env:
+      K3D_VERSION: "5.9.0"
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -131,13 +137,20 @@ jobs:
         with:
           version: ${{ inputs.helm-version }}
 
+      - name: Install k3d
+        # AbsaOSS/k3d-action is unmaintained (last pushed ~2 years ago)
+        # and broke after k3d migrated from rancher/k3d to k3d-io/k3d —
+        # its bundled install path 404s. Installing the pinned release
+        # binary directly avoids depending on that stale action.
+        run: |
+          curl -sSL -o k3d \
+            "https://github.com/k3d-io/k3d/releases/download/v${K3D_VERSION}/k3d-linux-amd64"
+          chmod +x k3d
+          sudo mv k3d /usr/local/bin/k3d
+          k3d version
+
       - name: Create k3d cluster
-        uses: AbsaOSS/k3d-action@ba94d4cdc1ddd8e577863e47d628b62226cc9e13 # v2.0.0
-        with:
-          cluster-name: "ci-validation"
-          args: >-
-            --agents 1
-            --no-lb
+        run: k3d cluster create ci-validation --agents 1 --no-lb --wait
 
       - name: Update chart dependencies
         run: helm dependency update ${{ inputs.chart-path }}
@@ -147,6 +160,10 @@ jobs:
           helm install test-release ${{ inputs.chart-path }} \
             --dry-run=server \
             --debug
+
+      - name: Delete k3d cluster
+        if: always()
+        run: k3d cluster delete ci-validation
 
   conftest-policies:
     runs-on: ubuntu-24.04
