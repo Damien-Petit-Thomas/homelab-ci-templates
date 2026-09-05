@@ -1,7 +1,7 @@
 package main
 
-# This policy checks that all container images in Deployments 
-# and DaemonSets are pinned to a specific version 
+# This policy checks that all container images in Deployments
+# and DaemonSets are pinned to a specific version
 
 deny[msg] {
     input.kind == "Deployment"
