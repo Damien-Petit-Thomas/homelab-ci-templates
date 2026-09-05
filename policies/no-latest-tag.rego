@@ -3,10 +3,11 @@ package main
 # Denies any image using the :latest tag, or no tag at all
 # (which implicitly resolves to :latest).
 
-# Workload kinds carrying a pod template at this exact path
-# (.spec.template.spec.containers / .initContainers) — factored
-# once to avoid duplicating the same logic per kind.
-workload_kinds := {"Deployment", "DaemonSet", "StatefulSet"}
+# Workload kinds enforced by this policy — all expose containers at
+# .spec.template.spec.containers / .initContainers. Add more kinds
+# here if broader coverage is needed (e.g. CronJob, which nests an
+# extra .spec.jobTemplate level and would need a separate rule).
+workload_kinds := {"Deployment", "DaemonSet", "StatefulSet", "Job", "ReplicaSet"}
 
 # Matches ":latest" at the end of the tag portion, OR immediately
 # followed by "@" (an image can carry both a mutable tag AND a
