@@ -1,0 +1,44 @@
+# zizmor: static analysis for GitHub Actions workflows. Catches issues
+# like template injection, excessive permissions, and credential
+# leakage in the workflow files themselves — not the application
+# code they run.
+#
+# Exposed as a reusable workflow so every repository in this homelab
+# (homelab-charts, homelab-argocd, homelab-iac, homelab-ansible) can
+# scan its OWN workflow files, not just the ones defined here. This
+# repository also calls it on itself via ci.yml.
+name: zizmor
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        required: false
+        type: string
+        default: ".github/workflows/"
+        description: "Path(s) to scan, passed to zizmor's inputs"
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  zizmor:
+    name: Static analysis of workflows
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF to Code Scanning
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@70fb788f84895a7701f5643d103d587e460b5c99 # v0.6.3
+        with:
+          inputs: |
+            ${{ inputs.paths }}
