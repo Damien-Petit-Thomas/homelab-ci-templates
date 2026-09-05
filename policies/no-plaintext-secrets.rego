@@ -1,16 +1,17 @@
 package main
 
-# This policy checks that Secrets do not contain inline data,
-# and instead are backed by ExternalSecrets (e.g., from Vault)
+# Denies any manifest of kind "Secret" entirely.
+#
+# In this architecture, real Secrets are never authored directly in
+# Git — they are generated dynamically at deploy time by External
+# Secrets Operator, backed by Vault. A rendered chart should never
+# contain a raw "Secret" object at all; only an "ExternalSecret"
+# that references one.
 
-deny[msg] {
+deny contains msg if {
     input.kind == "Secret"
-    secret_data := object.get(input, "data", {})
-    string_data := object.get(input, "stringData", {})
-    count(secret_data) + count(string_data) > 0
-    not input.metadata.annotations["generated-by"] == "external-secrets"
     msg := sprintf(
-        "Secret '%s' contains inline data — use an ExternalSecret backed by Vault instead",
+        "manifest defines a raw Secret '%s' — Secrets must never be authored directly, use an ExternalSecret instead",
         [input.metadata.name]
     )
 }
