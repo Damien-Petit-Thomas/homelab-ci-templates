@@ -10,8 +10,10 @@ package main
 
 deny contains msg if {
     input.kind == "Secret"
+    metadata := object.get(input, "metadata", {})
+    name := object.get(metadata, "name", object.get(metadata, "generateName", "<unknown>"))
     msg := sprintf(
         "manifest defines a raw Secret '%s' — Secrets must never be authored directly, use an ExternalSecret instead",
-        [input.metadata.name]
+        [name]
     )
 }

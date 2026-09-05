@@ -4,16 +4,38 @@ package main
 # (which implicitly resolves to :latest).
 
 # Workload kinds carrying a pod template at this exact path
-# (.spec.template.spec.containers) — factored once to avoid
-# duplicating the same logic per kind.
+# (.spec.template.spec.containers / .initContainers) — factored
+# once to avoid duplicating the same logic per kind.
 workload_kinds := {"Deployment", "DaemonSet", "StatefulSet"}
+
+# Matches ":latest" at the end of the tag portion, OR immediately
+# followed by "@" (an image can carry both a mutable tag AND a
+# digest at once, e.g. repo:latest@sha256:... — the digest makes it
+# look pinned, but the tag itself remains mobile and misleading).
+# A plain `endswith(image, ":latest")` misses this combined form.
+is_latest(image) if {
+    regex.match(":latest($|@)", image)
+}
 
 deny contains msg if {
     workload_kinds[input.kind]
     container := input.spec.template.spec.containers[_]
-    endswith(container.image, ":latest")
+    is_latest(container.image)
     msg := sprintf(
         "container '%s' uses ':latest' tag (image: %s) — pin an explicit version",
+        [container.name, container.image]
+    )
+}
+
+# initContainers are just as valid a vector for introducing an
+# unpinned image as regular containers — ignoring them would leave
+# a real gap despite the policy's stated intent.
+deny contains msg if {
+    workload_kinds[input.kind]
+    container := input.spec.template.spec.initContainers[_]
+    is_latest(container.image)
+    msg := sprintf(
+        "initContainer '%s' uses ':latest' tag (image: %s) — pin an explicit version",
         [container.name, container.image]
     )
 }
@@ -32,6 +54,17 @@ deny contains msg if {
     not regex.match(":[^/]+$", container.image)
     msg := sprintf(
         "container '%s' has no tag specified (image: %s), defaults to ':latest'",
+        [container.name, container.image]
+    )
+}
+
+deny contains msg if {
+    workload_kinds[input.kind]
+    container := input.spec.template.spec.initContainers[_]
+    not contains(container.image, "@")
+    not regex.match(":[^/]+$", container.image)
+    msg := sprintf(
+        "initContainer '%s' has no tag specified (image: %s), defaults to ':latest'",
         [container.name, container.image]
     )
 }
