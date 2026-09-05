@@ -13,7 +13,8 @@ shared across the `homelab-charts`, `homelab-argocd`, `homelab-iac`, and
 
 Every policy in this repository exists because of a real incident, not a
 theoretical best practice.
-The goal: mechanically prevent the same class of mistake from happening twice.
+The goal: mechanically prevent the same class of mistake from
+happening twice.
 
 ## Available reusable workflows
 
@@ -56,7 +57,7 @@ jobs:
 
 | Policy | What it prevents |
 |---|---|
-| `no-latest-tag.rego` | Images pinned to `:latest`, no tag at all, or tag+digest combos that still carry a mutable tag |
+| `no-latest-tag.rego` | Images pinned to `:latest` (including `:latest@sha256:...`), or with no tag at all |
 | `no-raw-secrets.rego` | Any `Secret` object authored directly — should always be an `ExternalSecret` |
 
 ## Security

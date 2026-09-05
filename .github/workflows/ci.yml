@@ -23,15 +23,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run actionlint
+      - name: Install actionlint
         run: |
-          bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.7
-          ./actionlint
+          curl -sSL -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
+          tar xzf actionlint.tar.gz actionlint
+
+      - name: Run actionlint
+        run: ./actionlint
 
   test-validate-helm:
     # Exercises this repo's own reusable workflow against a known-good
     # fixture chart. A regression in validate-helm.yml itself (e.g. a
     # broken command, a missing permission) would fail here.
+    #
+    # This job needs its own `permissions` block: with workflow-level
+    # `permissions: {}`, the called reusable workflow would otherwise
+    # have no token permissions at all and fail at its own checkout step.
+    permissions:
+      contents: read
     uses: ./.github/workflows/validate-helm.yml
     with:
       chart-path: test-fixtures/hello-test
