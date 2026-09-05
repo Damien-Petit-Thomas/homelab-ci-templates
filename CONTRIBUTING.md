@@ -9,10 +9,6 @@ entering git history in the first place.
 
 ### 1. Install pre-commit
 
-Use a virtual environment rather than installing into the system
-Python — required outright on distributions enforcing PEP 668
-(externally-managed environments), and good practice everywhere else:
-
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
