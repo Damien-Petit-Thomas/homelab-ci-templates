@@ -27,7 +27,7 @@ pre-commit-managed environments:
 
 ```bash
 # actionlint — see .github/workflows/ci.yml for the pinned version
-curl -sSL -o actionlint.tar.gz \
+curl -fsSLo actionlint.tar.gz \
   "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
 tar xzf actionlint.tar.gz actionlint
 sudo mv actionlint /usr/local/bin/
