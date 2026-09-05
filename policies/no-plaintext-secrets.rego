@@ -5,9 +5,9 @@ package main
 
 deny[msg] {
     input.kind == "Secret"
-    data := object.get(input, "data", {})
+    secret_data := object.get(input, "data", {})
     string_data := object.get(input, "stringData", {})
-    count(data) + count(string_data) > 0
+    count(secret_data) + count(string_data) > 0
     not input.metadata.annotations["generated-by"] == "external-secrets"
     msg := sprintf(
         "Secret '%s' contains inline data — use an ExternalSecret backed by Vault instead",
