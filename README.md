@@ -33,7 +33,7 @@ jobs:
 | Policy | What it prevents |
 |---|---|
 | `no-latest-tag.rego` | Images pinned to `:latest` or no tag at all |
-| `no-plaintext-secrets.rego` | Kubernetes `Secret` objects with inline data instead of `ExternalSecret` |
+| `no-raw-secrets.rego` | Any `Secret` object authored directly (should always be an `ExternalSecret`) |
 
 ## Security
 
