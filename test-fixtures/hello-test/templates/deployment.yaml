@@ -14,4 +14,31 @@ spec:
     spec:
       containers:
         - name: hello
-          image: nginx:1.27.3
+          # The standard nginx image listens on port 80, which
+          # requires root to bind. Using the unprivileged variant
+          # (listens on 8080 instead) lets runAsNonRoot actually
+          # work, rather than failing to start.
+          image: ghcr.io/nginx/nginx-unprivileged:1.27.3
+          ports:
+            - containerPort: 8080
+          securityContext:
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 101
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+      volumes:
+        - name: cache
+          emptyDir: {}
+        - name: run
+          emptyDir: {}

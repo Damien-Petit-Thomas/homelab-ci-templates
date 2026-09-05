@@ -1,0 +1,56 @@
+# Local git hooks, run before commits/pushes reach GitHub at all —
+# faster feedback than waiting for CI, and catches issues that
+# shouldn't ever be pushed in the first place (secrets, private keys).
+#
+# Install with:
+#   pip install pre-commit
+#   pre-commit install --hook-type pre-commit --hook-type pre-push
+#
+# See CONTRIBUTING.md for full setup instructions, including the
+# local tools (actionlint, kube-linter) required by the pre-push hooks.
+
+repos:
+  # Lightweight, generic checks — fast enough to run on every commit.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Secret scanning. Runs on every commit — a leaked credential should
+  # never even make it into local history, let alone get pushed.
+  #
+  # Note: gitleaks is maintainer-declared "feature complete" as of
+  # 2026; future releases are security patches only, with active
+  # development having moved to a successor project (Betterleaks).
+  # Still fine to use as-is, but worth knowing before assuming it
+  # will keep gaining new detection rules over time.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # Heavier checks — deferred to pre-push so they don't slow down
+  # every single commit, only the point where code is about to leave
+  # the local machine. These call locally installed binaries (see
+  # CONTRIBUTING.md) rather than pre-commit-managed environments, to
+  # reuse the exact same pinned versions used in CI.
+  - repo: local
+    hooks:
+      - id: actionlint
+        name: actionlint (workflow files)
+        entry: actionlint
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        stages: [pre-push]
+
+      - id: kube-linter-fixtures
+        name: kube-linter (test fixtures)
+        entry: bash -c 'helm template test-fixtures/hello-test | kube-linter lint -'
+        language: system
+        files: ^test-fixtures/.*\.ya?ml$
+        pass_filenames: false
+        stages: [pre-push]
