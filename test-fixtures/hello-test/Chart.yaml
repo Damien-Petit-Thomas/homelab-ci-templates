@@ -1,0 +1,4 @@
+apiVersion: v2
+name: hello-test
+description: Minimal chart used to exercise validate-helm.yml in this repo's own CI
+version: 0.1.0

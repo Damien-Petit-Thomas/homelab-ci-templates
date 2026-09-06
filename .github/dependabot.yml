@@ -17,23 +17,8 @@ updates:
         update-types: ["minor", "patch"]
         # Major updates remain separate for individual review.
 
-  # Docker images referenced by the Helm charts.
-  - package-ecosystem: "docker"
-    directory: "/charts"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "chore(deps)"
-    cooldown:
-      default-days: 7
-    groups:
-      docker-minor-and-patch:
-        patterns: ["*"]
-        update-types: ["minor", "patch"]
-
-  # Terraform modules and providers.
-  - package-ecosystem: "terraform"
+  # Pre-commit hooks used by this repository.
+  - package-ecosystem: "pre-commit"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -43,8 +28,6 @@ updates:
     cooldown:
       default-days: 7
     groups:
-      terraform-minor-and-patch:
+      pre-commit-minor-and-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
-        # Major updates remain separate for individual review.
-
