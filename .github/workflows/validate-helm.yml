@@ -143,7 +143,7 @@ jobs:
         # its bundled install path 404s. Installing the pinned release
         # binary directly avoids depending on that stale action.
         run: |
-          curl -sSL -o k3d \
+          curl -fsSLo k3d \
             "https://github.com/k3d-io/k3d/releases/download/v${K3D_VERSION}/k3d-linux-amd64"
           chmod +x k3d
           sudo mv k3d /usr/local/bin/k3d
