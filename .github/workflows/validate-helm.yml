@@ -156,8 +156,10 @@ jobs:
         run: helm dependency update ${{ inputs.chart-path }}
 
       - name: Server-side dry-run install
+        env:
+          CHART_PATH: ${{ inputs.chart-path }}
         run: |
-          helm install test-release ${{ inputs.chart-path }} \
+          helm install test-release "$CHART_PATH" \
             --dry-run=server \
             --debug
 
