@@ -1,0 +1,49 @@
+# zizmor: static analysis for GitHub Actions workflows. Catches issues
+# like template injection, excessive permissions, and credential
+# leakage in the workflow files themselves — not the application
+# code they run.
+#
+# Exposed as a reusable workflow so every repository in this homelab
+# (homelab-charts, homelab-argocd, homelab-iac, homelab-ansible) can
+# scan its OWN workflow files, not just the ones defined here. This
+# repository also calls it on itself via ci.yml.
+name: zizmor
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        required: false
+        type: string
+        default: ".github/workflows/"
+        description: "Path(s) to scan, passed to zizmor's inputs"
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  zizmor:
+    name: Static analysis of workflows
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read            # needed to check out the repo
+      security-events: write    # upload SARIF to Code Scanning (Advanced Security)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@70fb788f84895a7701f5643d103d587e460b5c99 # v0.6.3
+        with:
+          # The workflow_call `default` only applies when this workflow
+          # is actually invoked via `uses: ...@main` from another repo.
+          # For direct triggers on this repo (push/pull_request), the
+          # `inputs` context is empty, so `inputs.paths` alone would
+          # resolve to an empty string here — hence the explicit
+          # fallback via `||`.
+          inputs: ${{ inputs.paths || '.github/workflows/' }}
