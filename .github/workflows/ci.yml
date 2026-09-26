@@ -45,3 +45,18 @@ jobs:
     uses: ./.github/workflows/validate-helm.yml
     with:
       chart-path: test-fixtures/hello-test
+
+  gitea-copies-in-sync:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: .gitea/workflows must mirror .github/workflows
+        run: |
+          set -euo pipefail
+          for f in .gitea/workflows/*.yml; do
+            diff -u ".github/workflows/$(basename "$f")" "$f"
+          done
