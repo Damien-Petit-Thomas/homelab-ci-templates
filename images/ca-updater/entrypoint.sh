@@ -22,6 +22,8 @@ tmp="$(mktemp "$OUT_DIR/.bundle.XXXXXX")"
 trap 'rm -f "$tmp"' EXIT
 
 { cat "$SYSTEM_BUNDLE"; printf '\n'; cat "$CA_SOURCE"; } > "$tmp"
+# mktemp creates 0600; consumers run under arbitrary uids (e.g. Vault: 100).
+chmod 0644 "$tmp"
 
 before="$(grep -c "BEGIN CERTIFICATE" "$SYSTEM_BUNDLE")"
 after="$(grep -c "BEGIN CERTIFICATE" "$tmp")"
