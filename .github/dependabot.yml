@@ -31,3 +31,19 @@ updates:
       pre-commit-minor-and-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+
+  # Base images of everything under images/<name>/Dockerfile.
+  - package-ecosystem: "docker"
+    directories:
+      - "/images/*"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(images)"
+    cooldown:
+      default-days: 7
+    groups:
+      base-images-minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]

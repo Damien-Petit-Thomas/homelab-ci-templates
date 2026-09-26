@@ -1,0 +1,109 @@
+# Builds and publishes every image under images/<name>/ to GHCR.
+# Tags are immutable: a VERSION that already exists in the registry
+# fails the build — bump images/<name>/VERSION instead of overwriting.
+name: Build images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "images/**"
+      - ".github/workflows/build-images.yml"
+  pull_request:
+    paths:
+      - "images/**"
+      - ".github/workflows/build-images.yml"
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-ca-updater:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build test image
+        run: docker build -t ca-updater:test images/ca-updater
+      - name: Behaviour tests
+        run: images/ca-updater/test.sh ca-updater:test images/gitea-runner/ca.crt
+
+  build:
+    needs: test-ca-updater
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write        # push to GHCR
+      id-token: write        # keyless provenance signing
+      attestations: write    # publish build provenance
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [ca-updater, gitea-runner]
+    env:
+      IMAGE: ${{ matrix.image }}
+      PUBLISH: ${{ github.event_name == 'push' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Resolve image reference
+        id: ref
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"   # GHCR requires lowercase
+          version="$(tr -d '[:space:]' < "images/${IMAGE}/VERSION")"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "invalid VERSION: '$version'"; exit 1; }
+          echo "name=ghcr.io/${owner}/${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GHCR
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Refuse to overwrite an existing version
+        if: env.PUBLISH == 'true'
+        env:
+          REF: ${{ steps.ref.outputs.name }}:${{ steps.ref.outputs.version }}
+        run: |
+          if docker buildx imagetools inspect "$REF" >/dev/null 2>&1; then
+            echo "::error::$REF already exists — bump images/${IMAGE}/VERSION"
+            exit 1
+          fi
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: images/${{ matrix.image }}
+          push: ${{ env.PUBLISH == 'true' }}
+          provenance: mode=max
+          sbom: true
+          tags: |
+            ${{ steps.ref.outputs.name }}:${{ steps.ref.outputs.version }}
+            ${{ steps.ref.outputs.name }}:sha-${{ github.sha }}
+
+      - name: Attest build provenance
+        if: env.PUBLISH == 'true'
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-name: ${{ steps.ref.outputs.name }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
