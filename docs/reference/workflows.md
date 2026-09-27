@@ -20,4 +20,4 @@ zizmor also uploads SARIF results to Code Scanning.
 
 | Input | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `paths` | string | false | `` | Space-separated workflow files to scan. Empty (default): every *.yml/*.yaml under .github/workflows and .gitea/workflows.  |
+| `paths` | string | false | `` | Space-separated workflow files to scan. Empty (default): every *.yml/*.yaml under .github/workflows and .gitea/workflows. |
