@@ -27,11 +27,16 @@ jobs:
       - name: Compare the live ruleset with the committed one
         env:
           GH_TOKEN: ${{ github.token }}
+          RULESET: main-protection
         run: |
           # bypass_actors is omitted for non-admin tokens: compared by Terraform later.
           filter='{name, target, enforcement, conditions, rules}'
-          id="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets" --jq '.[] | select(.name=="main-protection") | .id')"
-          [[ -n "$id" ]] || { echo "::error::Ruleset 'main-protection' not found"; exit 1; }
+          id="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets" | jq -r --arg n "$RULESET" '.[] | select(.name == $n) | .id')"
+          if [[ -z "$id" ]]; then
+            echo "::error::ruleset '$RULESET' not found. Visible rulesets:"
+            gh api "repos/${GITHUB_REPOSITORY}/rulesets" --jq '.[].name'
+            exit 1
+          fi
           gh api "repos/${GITHUB_REPOSITORY}/rulesets/${id}" | jq -S "$filter" > live.json
           jq -S "$filter" .github/rulesets/main-protection.json > committed.json
           diff -u committed.json live.json && echo "no drift"
