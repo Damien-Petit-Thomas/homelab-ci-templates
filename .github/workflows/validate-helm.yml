@@ -11,22 +11,27 @@ on:
         required: false
         type: string
         default: "v3.16.3"
+        description: "Helm version to use for validation (default: v3.16.3)"
       kubeconform-version:
         required: false
         type: string
         default: "0.8.0"
+        description: "kubeconform version to use for validation (default: 0.8.0)"
       kubeconform-kubernetes-version:
         required: false
         type: string
         default: "1.31.0"
+        description: "Kubernetes version to use for kubeconform validation (default: 1.31.0)"
       kube-linter-version:
         required: false
         type: string
         default: "0.8.3"
+        description: "kube-linter version to use for validation (default: 0.8.3)"
       conftest-version:
         required: false
         type: string
         default: "0.69.0"
+        description: "conftest version to use for validation (default: 0.69.0)"
 
 permissions: {}
 defaults:

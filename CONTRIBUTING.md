@@ -70,3 +70,22 @@ Common types: `feat`, `fix`, `chore`, `docs`, `ci`, `refactor`.
 `main` is protected via a GitHub Ruleset: changes go through a pull
 request, and CI (actionlint, the internal `validate-helm.yml` exercise,
 zizmor, Scorecard) must pass before merge.
+
+
+## Tests
+
+New functionality must come with automated tests. Security controls
+(OPA policies, image entrypoints) must also include negative tests that prove
+they reject invalid input, with the expected message, not merely a failure.
+
+Run them locally:
+
+    pre-commit run --all-files
+    docker build -t ca-updater:test images/ca-updater
+    images/ca-updater/test.sh ca-updater:test images/gitea-runner/ca.crt
+
+## Tooling prerequisites
+
+- `actionlint` **with ShellCheck installed**: without ShellCheck, actionlint does
+  not analyse `run:` scripts.
+- `pre-commit`: hooks refuse commits on `main`, so always work on a branch.

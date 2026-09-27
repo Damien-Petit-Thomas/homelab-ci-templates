@@ -46,7 +46,7 @@ jobs:
           if [[ -z "$BASE" || "$BASE" =~ ^0+$ ]]; then
             images="$(ls images)"            # new branch: no usable base, build everything
           else
-            images="$(git diff --name-only "$BASE" HEAD | sed -n 's|^images/\([^/]*\)/.*|\1|p' | sort -u)"
+            images="$(git diff --name-only "$BASE" HEAD | grep -v '\.md$' | sed -n 's|^images/\([^/]*\)/.*|\1|p' | sort -u)"
           fi
           json="$(printf '%s\n' "$images" | jq -R . | jq -sc 'map(select(length > 0))')"
           echo "Images to build: $json"

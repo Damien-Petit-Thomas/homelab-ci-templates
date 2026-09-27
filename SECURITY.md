@@ -2,11 +2,10 @@
 
 ## Reporting a vulnerability
 
-If you discover a vulnerability in this repository, please report it
-privately using GitHub Security Advisories:
-https://github.com/Damien-Petit-Thomas/homelab-ci-templates/security/advisories/new
-
-Do not open a public issue for undisclosed vulnerabilities.
+Please report vulnerabilities **privately** through GitHub:
+<https://github.com/Damien-Petit-Thomas/homelab-ci-templates/security/advisories/new>
+(Security tab → *Report a vulnerability*). Do not open a public issue.
+You will receive an initial response within 7 days.
 
 ## What to include
 
