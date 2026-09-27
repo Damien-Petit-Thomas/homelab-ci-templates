@@ -60,6 +60,56 @@ jobs:
 | `no-latest-tag.rego` | Images pinned to `:latest` (including `:latest@sha256:...`), or with no tag at all |
 | `no-raw-secrets.rego` | Any `Secret` object authored directly — should always be an `ExternalSecret` |
 
+
+## Reference
+
+### `validate-helm.yml` inputs
+
+| Input | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `chart-path` | string | true | `` | Path to the Helm chart to validate |
+| `helm-version` | string | false | `v3.16.3` |  |
+| `kubeconform-version` | string | false | `0.8.0` |  |
+| `kubeconform-kubernetes-version` | string | false | `1.31.0` |  |
+| `kube-linter-version` | string | false | `0.8.3` |  |
+| `conftest-version` | string | false | `0.69.0` |  |
+
+### `zizmor.yml` inputs
+
+| Input | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `paths` | string | false | `` | Space-separated workflow files to scan. Empty (default): every *.yml/*.yaml under .github/workflows and .gitea/workflows.  |
+
+
+Neither workflow exposes outputs: the result is the job status. On GitHub,
+zizmor also uploads SARIF results to Code Scanning.
+
+### `ca-updater` image
+
+Init-container image that builds a trust store: system CA bundle plus one
+custom CA, with no network access at startup.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `CA_SOURCE` | `/custom-ca/ca.crt` | custom CA certificate (PEM), usually mounted from a ConfigMap |
+| `BUNDLE_OUT` | `/shared-ca/ca-certificates.crt` | merged bundle, written to a shared volume |
+
+- **Output**: the bundle is written with mode `0644`, readable by consumers running under any uid.
+- **Exit codes**: `0` on success; `1` with an explicit message if the CA is missing, unreadable,
+  empty or not PEM, or if the output directory is not writable. Kubernetes then retries the
+  init container instead of starting the pod with an incomplete trust store.
+- Runs as uid `10001`, compatible with `readOnlyRootFilesystem: true`.
+
+Verify provenance before use:
+
+    gh attestation verify oci://ghcr.io/damien-petit-thomas/ca-updater:<version> --owner Damien-Petit-Thomas
+
+### `gitea-runner` image
+
+Gitea Actions job image: the official runner image plus the homelab root CA and
+zizmor (installed from hash-locked requirements). Instance-specific: forks
+replace `ca.crt`. Keep its zizmor version aligned with the one bundled by
+`zizmor-action`, so both forges apply the same rules.
 ## Security
 
 Every workflow in this repository follows least-privilege defaults:
