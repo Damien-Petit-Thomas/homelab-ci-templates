@@ -31,7 +31,32 @@ on:
 permissions: {}
 
 jobs:
+  validate-inputs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    env:
+      CHART_PATH: ${{ inputs.chart-path }}
+      HELM_VERSION: ${{ inputs.helm-version }}
+      KUBECONFORM_VERSION: ${{ inputs.kubeconform-version }}
+      KUBECONFORM_K8S_VERSION: ${{ inputs.kubeconform-kubernetes-version }}
+      KUBE_LINTER_VERSION: ${{ inputs.kube-linter-version }}
+      CONFTEST_VERSION: ${{ inputs.conftest-version }}
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$*"; exit 1; }
+          [[ -n "$CHART_PATH" ]] || fail "chart-path is empty"
+          [[ "$CHART_PATH" =~ ^[A-Za-z0-9._/-]+$ ]] || fail "chart-path contains forbidden characters"
+          [[ "$CHART_PATH" != /* && "/$CHART_PATH/" != */../* ]] || fail "chart-path must be relative, without '..'"
+          for var in HELM_VERSION KUBECONFORM_VERSION KUBECONFORM_K8S_VERSION KUBE_LINTER_VERSION CONFTEST_VERSION; do
+            val="${!var}"
+            [[ "$val" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "$var='$val' is not an X.Y.Z version"
+          done
+          echo "inputs OK"
   helm-lint:
+    needs: validate-inputs
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -55,6 +80,7 @@ jobs:
         run: helm lint --strict "${INPUTS_CHART_PATH}"
 
   kubeconform:
+    needs: validate-inputs
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -94,6 +120,7 @@ jobs:
             rendered-manifests.yaml
 
   kube-linter:
+    needs: validate-inputs
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -126,6 +153,7 @@ jobs:
         run: kube-linter lint rendered-manifests.yaml
 
   server-dry-run:
+    needs: validate-inputs
     # Verifies the manifest is acceptable to a REAL apiserver
     # (unlike client-side `helm install --dry-run`, which never
     # contacts a cluster and therefore cannot catch server-side
@@ -135,6 +163,7 @@ jobs:
       contents: read
     env:
       K3D_VERSION: "5.9.0"
+      INPUTS_CHART_PATH: ${{ inputs.chart-path }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -175,6 +204,7 @@ jobs:
         run: k3d cluster delete ci-validation || true
 
   conftest-policies:
+    needs: validate-inputs
     runs-on: ubuntu-24.04
     permissions:
       contents: read
