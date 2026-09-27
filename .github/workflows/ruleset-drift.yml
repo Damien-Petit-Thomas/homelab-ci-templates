@@ -24,19 +24,27 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Compare the live ruleset with the committed one
+      - name: Compare every committed ruleset with the live one
         env:
           GH_TOKEN: ${{ github.token }}
-          RULESET: main-protection
         run: |
           # bypass_actors is omitted for non-admin tokens: compared by Terraform later.
           filter='{name, target, enforcement, conditions, rules}'
-          id="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets" | jq -r --arg n "$RULESET" '.[] | select(.name == $n) | .id')"
-          if [[ -z "$id" ]]; then
-            echo "::error::ruleset '$RULESET' not found. Visible rulesets:"
-            gh api "repos/${GITHUB_REPOSITORY}/rulesets" --jq '.[].name'
-            exit 1
-          fi
-          gh api "repos/${GITHUB_REPOSITORY}/rulesets/${id}" | jq -S "$filter" > live.json
-          jq -S "$filter" .github/rulesets/main-protection.json > committed.json
-          diff -u committed.json live.json && echo "no drift"
+          live_rulesets="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets")"
+          drift=0
+          for file in .github/rulesets/*.json; do
+            name="$(jq -r '.name' "$file")"
+            id="$(jq -r --arg n "$name" '.[] | select(.name == $n) | .id' <<<"$live_rulesets")"
+            if [[ -z "$id" ]]; then
+              echo "::error::ruleset '$name' ($file) not found in the repository"
+              drift=1; continue
+            fi
+            if diff -u <(jq -S "$filter" "$file") \
+                       <(gh api "repos/${GITHUB_REPOSITORY}/rulesets/${id}" | jq -S "$filter"); then
+              echo "no drift: $name"
+            else
+              echo "::error::drift detected on ruleset '$name'"
+              drift=1
+            fi
+          done
+          exit "$drift"
