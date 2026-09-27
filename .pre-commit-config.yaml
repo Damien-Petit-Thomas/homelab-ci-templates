@@ -56,3 +56,9 @@ repos:
         files: ^test-fixtures/.*\.ya?ml$
         pass_filenames: false
         stages: [pre-push]
+
+      - id: full-sha-pins
+        name: action pins use full 40-char commit SHAs
+        entry: 'uses:\s*[^@\s]+@[0-9a-f]{7,39}(\s|$)'
+        language: pygrep
+        files: ^\.(github|gitea)/workflows/.*\.ya?ml$
