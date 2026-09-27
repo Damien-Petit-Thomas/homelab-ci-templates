@@ -1,0 +1,4 @@
+apiVersion: v2
+name: bad-raw-secret
+description: Negative fixture, must be rejected by the no-raw-secrets policy
+version: 0.1.0

@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bad-latest-tag
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bad-latest-tag
+  template:
+    metadata:
+      labels:
+        app: bad-latest-tag
+    spec:
+      containers:
+        - name: app
+          image: nginx:latest   # the single intended violation
