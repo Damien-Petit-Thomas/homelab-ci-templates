@@ -60,3 +60,49 @@ jobs:
           for f in .gitea/workflows/*.yml; do
             diff -u ".github/workflows/$(basename "$f")" "$f"
           done
+
+  # Negative tests: each fixture carries exactly one violation, and conftest
+  # must reject it WITH the expected policy message. A failure for any other
+  # reason (Rego syntax error, render error) does not count as a pass.
+  policies-reject-bad-charts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - fixture: bad-latest-tag
+            expected: "uses ':latest' tag"
+          - fixture: bad-raw-secret
+            expected: "manifest defines a raw Secret"
+    env:
+      FIXTURE: test-fixtures/${{ matrix.fixture }}
+      EXPECTED: ${{ matrix.expected }}
+      CONFTEST_VERSION: "0.69.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+
+      - name: Install conftest (checksum verified)
+        run: |
+          base="https://github.com/open-policy-agent/conftest/releases/download/v${CONFTEST_VERSION}"
+          asset="conftest_${CONFTEST_VERSION}_Linux_x86_64.tar.gz"
+          curl -sSLO "${base}/${asset}"
+          curl -sSL "${base}/checksums.txt" | grep " ${asset}\$" | sha256sum -c -
+          sudo tar xzf "${asset}" -C /usr/local/bin conftest
+
+      - name: conftest must reject the fixture, with the expected message
+        run: |
+          helm template "$FIXTURE" > rendered.yaml
+          rc=0; out="$(conftest test --policy policies rendered.yaml 2>&1)" || rc=$?
+          echo "$out"
+          [[ "$rc" -ne 0 ]] || { echo "::error::$FIXTURE was accepted: the policy is not enforced"; exit 1; }
+          [[ "$out" == *"$EXPECTED"* ]] || { echo "::error::$FIXTURE rejected for the wrong reason (expected: $EXPECTED)"; exit 1; }
+          echo "OK: rejected with the expected message"
