@@ -161,7 +161,6 @@ jobs:
 
       - name: Install kube-linter (signature verified)
         env:
-          INPUTS_KUBE_LINTER_VERSION: ${{ inputs.kube-linter-version }}
           # stackrox/kube-linter release signing key (kubelinter-cosign.pub in the
           # upstream repository, checked against the bundle key hint). Pinned here
           # because a reusable workflow runs in the caller's workspace. An upstream
