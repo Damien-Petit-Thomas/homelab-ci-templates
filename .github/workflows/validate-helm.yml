@@ -113,10 +113,14 @@ jobs:
       - name: Render chart
         run: helm template "${INPUTS_CHART_PATH}" > rendered-manifests.yaml
 
-      - name: Install kubeconform
+      - name: Install kubeconform (checksum verified)
         run: |
-          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${INPUTS_KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
-            | sudo tar xz -C /usr/local/bin kubeconform
+          version="${INPUTS_KUBECONFORM_VERSION#v}"
+          base="https://github.com/yannh/kubeconform/releases/download/v${version}"
+          asset="kubeconform-linux-amd64.tar.gz"
+          curl -fsSLO "${base}/${asset}"
+          curl -fsSL "${base}/CHECKSUMS" | grep " ${asset}\$" | sha256sum -c -
+          sudo tar xzf "${asset}" -C /usr/local/bin kubeconform
 
       - name: Validate rendered manifests against Kubernetes schema
         run: |
@@ -152,10 +156,30 @@ jobs:
       - name: Render chart
         run: helm template "${INPUTS_CHART_PATH}" > rendered-manifests.yaml
 
-      - name: Install kube-linter
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba # v4.1.2
+
+      - name: Install kube-linter (signature verified)
+        env:
+          INPUTS_KUBE_LINTER_VERSION: ${{ inputs.kube-linter-version }}
+          # stackrox/kube-linter release signing key (kubelinter-cosign.pub in the
+          # upstream repository, checked against the bundle key hint). Pinned here
+          # because a reusable workflow runs in the caller's workspace. An upstream
+          # key rotation makes this step fail loudly: update the key after checking it.
+          KUBE_LINTER_COSIGN_KEY: |
+            -----BEGIN PUBLIC KEY-----
+            MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEl0HCkCRzYv0qH5QiazoXeXe2qwFX
+            DmAszeH26g1s3OSsG/focPWkN88wEKQ5eiE95v+Z2snUQPl/mjPdvqpyjA==
+            -----END PUBLIC KEY-----
         run: |
-          curl -sSL "https://github.com/stackrox/kube-linter/releases/download/v${INPUTS_KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz" \
-            | sudo tar xz -C /usr/local/bin kube-linter
+          version="${INPUTS_KUBE_LINTER_VERSION#v}"
+          base="https://github.com/stackrox/kube-linter/releases/download/v${version}"
+          curl -fsSLO "${base}/kube-linter-linux"
+          curl -fsSLO "${base}/kube-linter-linux.sigstore.json"
+          printf '%s' "$KUBE_LINTER_COSIGN_KEY" > kubelinter-cosign.pub
+          cosign verify-blob --key kubelinter-cosign.pub \
+            --bundle kube-linter-linux.sigstore.json kube-linter-linux
+          sudo install -m 0755 kube-linter-linux /usr/local/bin/kube-linter
 
       - name: Run kube-linter
         run: kube-linter lint rendered-manifests.yaml
@@ -243,10 +267,14 @@ jobs:
       - name: Render chart
         run: helm template "${INPUTS_CHART_PATH}" > rendered-manifests.yaml
 
-      - name: Install conftest
+      - name: Install conftest (checksum verified)
         run: |
-          curl -sSL "https://github.com/open-policy-agent/conftest/releases/download/v${INPUTS_CONFTEST_VERSION}/conftest_${INPUTS_CONFTEST_VERSION}_Linux_x86_64.tar.gz" \
-            | sudo tar xz -C /usr/local/bin conftest
+          version="${INPUTS_CONFTEST_VERSION#v}"
+          base="https://github.com/open-policy-agent/conftest/releases/download/v${version}"
+          asset="conftest_${version}_Linux_x86_64.tar.gz"
+          curl -fsSLO "${base}/${asset}"
+          curl -fsSL "${base}/checksums.txt" | grep " ${asset}\$" | sha256sum -c -
+          sudo tar xzf "${asset}" -C /usr/local/bin conftest
 
       - name: Run OPA policies
         run: conftest test --policy .ci-templates/policies rendered-manifests.yaml
