@@ -16,6 +16,15 @@ theoretical best practice.
 The goal: mechanically prevent the same class of mistake from
 happening twice.
 
+
+## Documentation
+
+- [Reusable workflows reference](docs/reference/workflows.md): inputs of `validate-helm.yml` and `zizmor.yml`
+- [`ca-updater` image](images/ca-updater/README.md): variables, outputs, exit codes
+- [`gitea-runner` image](images/gitea-runner/README.md): contents and version alignment
+- [Contributing](CONTRIBUTING.md): workflow, tooling, test policy
+- [Security policy](SECURITY.md): private vulnerability reporting, accepted Scorecard exceptions
+
 ## Available reusable workflows
 
 ### validate-helm.yml
@@ -60,19 +69,6 @@ jobs:
 | `no-latest-tag.rego` | Images pinned to `:latest` (including `:latest@sha256:...`), or with no tag at all |
 | `no-raw-secrets.rego` | Any `Secret` object authored directly — should always be an `ExternalSecret` |
 
-
-## Reference
-
-### `validate-helm.yml` inputs
-
-| Input | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `chart-path` | string | true | — | Path to the Helm chart to validate |
- | `helm-version` | string | false | `v3.16.3` | Helm version to install for validation |
- | `kubeconform-version` | string | false | `0.8.0` | kubeconform version used for schema validation |
- | `kubeconform-kubernetes-version` | string | false | `1.31.0` | Kubernetes version passed to kubeconform |
- | `kube-linter-version` | string | false | `0.8.3` | kube-linter version used for linting |
- | `conftest-version` | string | false | `0.69.0` | conftest version used to run OPA policies |
 
 ### `zizmor.yml` inputs
 
