@@ -76,15 +76,17 @@ jobs:
           inputs: ${{ steps.targets.outputs.paths }}
 
       - name: Run zizmor (other forges)
+        # zizmor-action's nested container can't see the job workspace under
+        # DinD, so zizmor runs natively from the job image, where it is
+        # installed from hash-locked requirements (see images/gitea-runner).
         if: github.server_url != 'https://github.com'
         env:
           TARGETS: ${{ steps.targets.outputs.paths }}
-          ZIZMOR_VERSION: "1.30.0"
         run: |
-          set -euo pipefail
-          [ -n "$TARGETS" ] || { echo "::error::empty scan target list"; exit 1; }
-          python3 -m venv /tmp/zizmor
-          /tmp/zizmor/bin/pip install --quiet "zizmor==${ZIZMOR_VERSION}"
-          # TARGETS is a space-separated file list: word splitting intended.
-          # shellcheck disable=SC2086
-          /tmp/zizmor/bin/zizmor --offline --format=plain $TARGETS
+          command -v zizmor >/dev/null || {
+            echo "::error::zizmor not found in the job image; use ghcr.io/damien-petit-thomas/gitea-runner or an image that ships it"
+            exit 1
+          }
+          zizmor --version
+          read -ra targets <<< "$TARGETS"
+          zizmor --offline --format=plain "${targets[@]}"
