@@ -30,7 +30,7 @@ jobs:
         run: |
           # bypass_actors is omitted for non-admin tokens: compared by Terraform later.
           filter='{name, target, enforcement, conditions, rules}'
-          live_rulesets="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets")"
+          live_rulesets="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/rulesets")"
           drift=0
           for file in .github/rulesets/*.json; do
             name="$(jq -r '.name' "$file")"
