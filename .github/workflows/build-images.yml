@@ -48,7 +48,7 @@ jobs:
           else
             images="$(git diff --name-only "$BASE" HEAD | sed -n 's|^images/\([^/]*\)/.*|\1|p' | sort -u)"
           fi
-          json="$(printf '%s\n' $images | jq -R . | jq -sc 'map(select(length > 0))')"
+          json="$(printf '%s\n' "$images" | jq -R . | jq -sc 'map(select(length > 0))')"
           echo "Images to build: $json"
           echo "images=$json" >> "$GITHUB_OUTPUT"
   test-ca-updater:
