@@ -5,7 +5,7 @@
 Please report vulnerabilities **privately** through GitHub:
 <https://github.com/Damien-Petit-Thomas/homelab-ci-templates/security/advisories/new>
 (Security tab → *Report a vulnerability*). Do not open a public issue.
-You will receive an initial response within 14 days.
+You will receive an initial response within 7 days.
 
 ## What to include
 
