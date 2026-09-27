@@ -68,11 +68,11 @@ jobs:
 | Input | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `chart-path` | string | true | — | Path to the Helm chart to validate |
-| `helm-version` | string | false | `v3.16.3` |  |
-| `kubeconform-version` | string | false | `0.8.0` |  |
-| `kubeconform-kubernetes-version` | string | false | `1.31.0` |  |
-| `kube-linter-version` | string | false | `0.8.3` |  |
-| `conftest-version` | string | false | `0.69.0` |  |
+ | `helm-version` | string | false | `v3.16.3` | Helm version to install for validation |
+ | `kubeconform-version` | string | false | `0.8.0` | kubeconform version used for schema validation |
+ | `kubeconform-kubernetes-version` | string | false | `1.31.0` | Kubernetes version passed to kubeconform |
+ | `kube-linter-version` | string | false | `0.8.3` | kube-linter version used for linting |
+ | `conftest-version` | string | false | `0.69.0` | conftest version used to run OPA policies |
 
 ### `zizmor.yml` inputs
 
