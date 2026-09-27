@@ -67,7 +67,7 @@ jobs:
 
 | Input | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `chart-path` | string | true | `` | Path to the Helm chart to validate |
+| `chart-path` | string | true | — | Path to the Helm chart to validate |
 | `helm-version` | string | false | `v3.16.3` |  |
 | `kubeconform-version` | string | false | `0.8.0` |  |
 | `kubeconform-kubernetes-version` | string | false | `1.31.0` |  |
