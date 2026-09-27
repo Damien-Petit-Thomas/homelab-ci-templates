@@ -1,0 +1,42 @@
+name: ruleset-drift
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  pull_request:
+    paths: [".github/rulesets/**"]
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+jobs:
+  drift:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare the live ruleset with the committed one
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RULESET: main-protection
+        run: |
+          # bypass_actors is omitted for non-admin tokens: compared by Terraform later.
+          filter='{name, target, enforcement, conditions, rules}'
+          id="$(gh api "repos/${GITHUB_REPOSITORY}/rulesets" | jq -r --arg n "$RULESET" '.[] | select(.name == $n) | .id')"
+          if [[ -z "$id" ]]; then
+            echo "::error::ruleset '$RULESET' not found. Visible rulesets:"
+            gh api "repos/${GITHUB_REPOSITORY}/rulesets" --jq '.[].name'
+            exit 1
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/rulesets/${id}" | jq -S "$filter" > live.json
+          jq -S "$filter" .github/rulesets/main-protection.json > committed.json
+          diff -u committed.json live.json && echo "no drift"
