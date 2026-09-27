@@ -25,6 +25,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      images: ${{ steps.detect.outputs.images }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Detect changed images
+        id: detect
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [[ -z "$BASE" || "$BASE" =~ ^0+$ ]]; then
+            images="$(ls images)"            # new branch: no usable base, build everything
+          else
+            images="$(git diff --name-only "$BASE" HEAD | sed -n 's|^images/\([^/]*\)/.*|\1|p' | sort -u)"
+          fi
+          json="$(printf '%s\n' "$images" | jq -R . | jq -sc 'map(select(length > 0))')"
+          echo "Images to build: $json"
+          echo "images=$json" >> "$GITHUB_OUTPUT"
   test-ca-updater:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -32,7 +58,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - name: Build test image
@@ -47,7 +73,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - name: Build test image
@@ -65,7 +91,8 @@ jobs:
           echo "OK: zizmor $got, CA count $ours (base $base + 1)"
 
   build:
-    needs: [test-ca-updater, test-gitea-runner]
+    needs: [changes, test-ca-updater, test-gitea-runner]
+    if: needs.changes.outputs.images != '[]'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -76,13 +103,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [ca-updater, gitea-runner]
+        image: ${{ fromJSON(needs.changes.outputs.images) }}
     env:
       IMAGE: ${{ matrix.image }}
       PUBLISH: ${{ github.event_name == 'push' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
