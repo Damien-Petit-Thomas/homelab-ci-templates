@@ -17,8 +17,11 @@ portable across both forges.
 - `persist-credentials: false` on every checkout.
 - Expressions (`${{ ... }}`) are never interpolated in `run:` scripts: pass them
   through `env:` and quote every expansion (`"${VAR}"`).
-- Every variable used in a `run:` script is declared in the job's `env:`
-  (scripts run with `bash -euo pipefail`, so a typo fails, but flag it early).
+- Every workflow value used in a `run:` script (inputs, matrix values, step
+  outputs, secrets) reaches it through the step or job `env:`. Runner-provided
+  variables (`GITHUB_*`, `RUNNER_*`) and variables assigned inside the script
+  itself need no declaration. Scripts run with `bash -euo pipefail`, so a
+  misspelled variable fails at runtime; flag it earlier in review.
 - New CI jobs are added to the `needs:` of the `ci-ok` aggregator, never as
   separate required checks in the ruleset.
 - Path-filtered workflows must never become required status checks.
