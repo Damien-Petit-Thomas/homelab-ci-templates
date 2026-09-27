@@ -29,6 +29,9 @@ on:
         default: "0.69.0"
 
 permissions: {}
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
 
 jobs:
   validate-inputs:
@@ -195,7 +198,7 @@ jobs:
 
       - name: Server-side dry-run install
         run: |
-          helm install test-release "$INPUT_CHART_PATH" \
+          helm install test-release "${INPUTS_CHART_PATH}" \
             --dry-run=server \
             --debug
 
