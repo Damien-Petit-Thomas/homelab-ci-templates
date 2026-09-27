@@ -12,6 +12,10 @@ on:
 
 permissions: {}
 
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
 jobs:
   actionlint:
     runs-on: ubuntu-24.04
