@@ -91,7 +91,7 @@ jobs:
           echo "OK: zizmor $got, CA count $ours (base $base + 1)"
 
   build:
-    needs: [test-ca-updater, test-gitea-runner]
+    needs: [changes, test-ca-updater, test-gitea-runner]
     if: needs.changes.outputs.images != '[]'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
