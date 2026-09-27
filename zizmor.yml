@@ -1,0 +1,7 @@
+# zizmor configuration for homelab-ci-templates.
+rules:
+  # GitHub's "$/" self-repository syntax isn't supported by Gitea Actions,
+  # and these templates must run on both forges. "./" stays unambiguous in
+  # top-level workflows; the audit is advisory (help level) only.
+  self-repository:
+    disable: true

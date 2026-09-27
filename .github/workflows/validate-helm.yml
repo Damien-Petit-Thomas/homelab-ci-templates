@@ -35,6 +35,8 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    env:
+      INPUTS_CHART_PATH: ${{ inputs.chart-path }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -47,15 +49,19 @@ jobs:
           version: ${{ inputs.helm-version }}
 
       - name: Update chart dependencies
-        run: helm dependency update ${{ inputs.chart-path }}
+        run: helm dependency update "${INPUTS_CHART_PATH}"
 
       - name: Helm lint (strict)
-        run: helm lint --strict ${{ inputs.chart-path }}
+        run: helm lint --strict "${INPUTS_CHART_PATH}"
 
   kubeconform:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    env:
+      INPUTS_CHART_PATH: ${{ inputs.chart-path }}
+      INPUTS_KUBECONFORM_VERSION: ${{ inputs.kubeconform-version }}
+      INPUTS_KUBECONFORM_KUBERNETES_VERSION: ${{ inputs.kubeconform-kubernetes-version }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -68,14 +74,14 @@ jobs:
           version: ${{ inputs.helm-version }}
 
       - name: Update chart dependencies
-        run: helm dependency update ${{ inputs.chart-path }}
+        run: helm dependency update "${INPUTS_CHART_PATH}"
 
       - name: Render chart
-        run: helm template ${{ inputs.chart-path }} > rendered-manifests.yaml
+        run: helm template "${INPUTS_CHART_PATH}" > rendered-manifests.yaml
 
       - name: Install kubeconform
         run: |
-          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${{ inputs.kubeconform-version }}/kubeconform-linux-amd64.tar.gz" \
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/v${INPUTS_KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
             | sudo tar xz -C /usr/local/bin kubeconform
 
       - name: Validate rendered manifests against Kubernetes schema
@@ -83,7 +89,7 @@ jobs:
           kubeconform \
             -strict \
             -summary \
-            -kubernetes-version ${{ inputs.kubeconform-kubernetes-version }} \
+            -kubernetes-version "${INPUTS_KUBECONFORM_KUBERNETES_VERSION}" \
             -ignore-missing-schemas \
             rendered-manifests.yaml
 
@@ -91,6 +97,9 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    env:
+      INPUTS_CHART_PATH: ${{ inputs.chart-path }}
+      INPUTS_KUBE_LINTER_VERSION: ${{ inputs.kube-linter-version }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -103,14 +112,14 @@ jobs:
           version: ${{ inputs.helm-version }}
 
       - name: Update chart dependencies
-        run: helm dependency update ${{ inputs.chart-path }}
+        run: helm dependency update "${INPUTS_CHART_PATH}"
 
       - name: Render chart
-        run: helm template ${{ inputs.chart-path }} > rendered-manifests.yaml
+        run: helm template "${INPUTS_CHART_PATH}" > rendered-manifests.yaml
 
       - name: Install kube-linter
         run: |
-          curl -sSL "https://github.com/stackrox/kube-linter/releases/download/v${{ inputs.kube-linter-version }}/kube-linter-linux.tar.gz" \
+          curl -sSL "https://github.com/stackrox/kube-linter/releases/download/v${INPUTS_KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz" \
             | sudo tar xz -C /usr/local/bin kube-linter
 
       - name: Run kube-linter
@@ -153,13 +162,11 @@ jobs:
         run: k3d cluster create ci-validation --agents 1 --no-lb --wait
 
       - name: Update chart dependencies
-        run: helm dependency update ${{ inputs.chart-path }}
+        run: helm dependency update "${INPUTS_CHART_PATH}"
 
       - name: Server-side dry-run install
-        env:
-          CHART_PATH: ${{ inputs.chart-path }}
         run: |
-          helm install test-release "$CHART_PATH" \
+          helm install test-release "$INPUT_CHART_PATH" \
             --dry-run=server \
             --debug
 
@@ -171,6 +178,9 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    env:
+      INPUTS_CHART_PATH: ${{ inputs.chart-path }}
+      INPUTS_CONFTEST_VERSION: ${{ inputs.conftest-version }}
     steps:
       - name: Checkout (for the chart to validate)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -190,14 +200,14 @@ jobs:
           version: ${{ inputs.helm-version }}
 
       - name: Update chart dependencies
-        run: helm dependency update ${{ inputs.chart-path }}
+        run: helm dependency update "${INPUTS_CHART_PATH}"
 
       - name: Render chart
-        run: helm template ${{ inputs.chart-path }} > rendered-manifests.yaml
+        run: helm template "${INPUTS_CHART_PATH}" > rendered-manifests.yaml
 
       - name: Install conftest
         run: |
-          curl -sSL "https://github.com/open-policy-agent/conftest/releases/download/v${{ inputs.conftest-version }}/conftest_${{ inputs.conftest-version }}_Linux_x86_64.tar.gz" \
+          curl -sSL "https://github.com/open-policy-agent/conftest/releases/download/v${INPUTS_CONFTEST_VERSION}/conftest_${INPUTS_CONFTEST_VERSION}_Linux_x86_64.tar.gz" \
             | sudo tar xz -C /usr/local/bin conftest
 
       - name: Run OPA policies
