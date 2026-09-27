@@ -40,8 +40,32 @@ jobs:
       - name: Behaviour tests
         run: images/ca-updater/test.sh ca-updater:test images/gitea-runner/ca.crt
 
+  test-gitea-runner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Build test image
+        run: docker build -t gitea-runner:test images/gitea-runner
+      - name: Smoke tests (zizmor version, CA trust)
+        run: |
+          want="$(sed -n 's/^zizmor==//p' images/gitea-runner/requirements.in)"
+          got="$(docker run --rm gitea-runner:test zizmor --version | awk '{print $2}')"
+          [[ "$got" == "$want" ]] || { echo "::error::zizmor $got, expected $want"; exit 1; }
+          base_image="$(sed -n 's/^FROM //p' images/gitea-runner/Dockerfile)"
+          count='grep -c "BEGIN CERTIFICATE" /etc/ssl/certs/ca-certificates.crt'
+          base="$(docker run --rm "$base_image" sh -c "$count")"
+          ours="$(docker run --rm gitea-runner:test sh -c "$count")"
+          [[ "$ours" -eq $((base + 1)) ]] || { echo "::error::CA count $ours, expected $((base + 1))"; exit 1; }
+          echo "OK: zizmor $got, CA count $ours (base $base + 1)"
+
   build:
-    needs: test-ca-updater
+    needs: [test-ca-updater, test-gitea-runner]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:

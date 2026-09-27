@@ -47,3 +47,14 @@ updates:
       base-images-minor-and-patch:
         patterns: ["*"]
         update-types: ["minor", "patch"]
+
+  # Hash-locked Python tools baked into images (pip-compile .in/.txt pairs).
+  - package-ecosystem: "pip"
+    directory: "/images/gitea-runner"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(images)"
+    cooldown:
+      default-days: 7
