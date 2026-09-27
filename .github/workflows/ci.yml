@@ -69,6 +69,7 @@ jobs:
   # must reject it WITH the expected policy message. A failure for any other
   # reason (Rego syntax error, render error) does not count as a pass.
   policies-reject-bad-charts:
+    name: policies-reject-bad-charts (${{ matrix.fixture }})
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -110,3 +111,27 @@ jobs:
           [[ "$rc" -ne 0 ]] || { echo "::error::$FIXTURE was accepted: the policy is not enforced"; exit 1; }
           [[ "$out" == *"$EXPECTED"* ]] || { echo "::error::$FIXTURE rejected for the wrong reason (expected: $EXPECTED)"; exit 1; }
           echo "OK: rejected with the expected message"
+
+
+  # Single required status check for the ruleset: stable name, independent of
+  # matrix values, and new jobs only need to be added here.
+  ci-ok:
+    name: ci-ok
+    if: always()
+    needs:
+      - actionlint
+      - test-validate-helm
+      - policies-reject-bad-charts
+      - gitea-copies-in-sync
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: All required jobs succeeded
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for r in $RESULTS; do
+            [[ "$r" == "success" ]] || { echo "::error::a required job ended with: $r"; exit 1; }
+          done
+          echo "all required jobs succeeded"
