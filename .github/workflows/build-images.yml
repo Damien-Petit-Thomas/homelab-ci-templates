@@ -57,7 +57,7 @@ jobs:
           want="$(sed -n 's/^zizmor==//p' images/gitea-runner/requirements.in)"
           got="$(docker run --rm gitea-runner:test zizmor --version | awk '{print $2}')"
           [[ "$got" == "$want" ]] || { echo "::error::zizmor $got, expected $want"; exit 1; }
-          base_image="$(sed -n 's/^FROM //p' images/gitea-runner/Dockerfile)"
+          base_image="$(sed -n 's/^FROM //p' images/gitea-runner/Dockerfile | head -n1)"
           count='grep -c "BEGIN CERTIFICATE" /etc/ssl/certs/ca-certificates.crt'
           base="$(docker run --rm "$base_image" sh -c "$count")"
           ours="$(docker run --rm gitea-runner:test sh -c "$count")"
