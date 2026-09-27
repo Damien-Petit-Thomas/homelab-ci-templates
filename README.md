@@ -1,6 +1,7 @@
 # homelab-ci-templates
 
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Damien-Petit-Thomas/homelab-ci-templates/badge)](https://scorecard.dev/viewer/?uri=github.com/Damien-Petit-Thomas/homelab-ci-templates)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14983/badge)](https://www.bestpractices.dev/projects/14983)
 [![CI](https://github.com/Damien-Petit-Thomas/homelab-ci-templates/actions/workflows/ci.yml/badge.svg)](https://github.com/Damien-Petit-Thomas/homelab-ci-templates/actions/workflows/ci.yml)
 [![zizmor](https://github.com/Damien-Petit-Thomas/homelab-ci-templates/actions/workflows/zizmor.yml/badge.svg)](https://github.com/Damien-Petit-Thomas/homelab-ci-templates/actions/workflows/zizmor.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
