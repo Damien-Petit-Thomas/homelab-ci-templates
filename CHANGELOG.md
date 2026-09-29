@@ -5,6 +5,27 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Callers should reference the moving
 major tag (`@v1`); breaking changes only ship in a new major version.
 
+
+## [1.1.0] - 2026-09-27
+
+### Security
+- `validate-helm.yml` verifies every tool it downloads: checksums for
+  kubeconform and conftest, cosign signature for kube-linter against the
+  upstream release key. HTTP errors on downloads now fail the job instead of
+  producing a corrupt file.
+
+### Added
+- CI fails when `docs/reference/workflows.md` is not regenerated from the
+  workflows.
+- Pre-commit guards: no commits on `main`, action pins must be full 40-character
+  commit SHAs.
+
+### Deprecated
+- The `.gitea/workflows/` copies. Gitea callers can reference
+  `.github/workflows/<name>.yml` directly (verified on Gitea Actions); the
+  copies will be removed in 2.0.0. Callers pinned to `@v1` keep working.
+
+
 ## [1.0.0] - 2026-09-27
 
 First stable release.
