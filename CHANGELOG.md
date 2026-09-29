@@ -5,6 +5,16 @@ All notable changes to this project are documented here. The format follows
 [Semantic Versioning](https://semver.org/). Callers should reference the moving
 major tag (`@v1`); breaking changes only ship in a new major version.
 
+## [2.0.0] - 2026-09-27
+
+### Removed
+- **Breaking:** the `.gitea/workflows/` copies and their parity check.
+  Migration: replace `…/.gitea/workflows/<name>.yml@v1` with
+  `…/.github/workflows/<name>.yml@v2`. Callers pinned to `@v1` are unaffected.
+
+### Added
+- Architecture decision records (`docs/adr/`) and a security model
+  (`docs/security-model.md`).
 
 ## [1.1.0] - 2026-09-27
 

@@ -26,9 +26,9 @@ portable across both forges.
   separate required checks in the ruleset.
 - Path-filtered workflows must never become required status checks.
 
-## GitHub / Gitea parity
-- A reusable workflow callable from Gitea exists in both `.github/workflows/`
-  and `.gitea/workflows/`, identical. Flag a PR that changes one copy only.
+## GitHub / Gitea portability
+- Shared workflows are called from both forges through their
+  `.github/workflows/` path; do not reintroduce per-forge copies.
 - Avoid GitHub-only syntax in shared workflows (e.g. `$/` self-repository refs).
 
 ## Images (`images/<name>/`)

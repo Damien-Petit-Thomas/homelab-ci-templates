@@ -25,6 +25,8 @@ happening twice.
 - [`gitea-runner` image](images/gitea-runner/README.md): contents and version alignment
 - [Contributing](CONTRIBUTING.md): workflow, tooling, test policy
 - [Security policy](SECURITY.md): private vulnerability reporting, accepted Scorecard exceptions
+- [Security model](docs/security-model.md): the controls, and how they are enforced
+- [Architecture decisions](docs/adr/README.md): why things are the way they are
 
 ## Available reusable workflows
 
@@ -71,15 +73,9 @@ jobs:
 | `no-raw-secrets.rego` | Any `Secret` object authored directly — should always be an `ExternalSecret` |
 
 
-### `zizmor.yml` inputs
+### Inputs and outputs
 
-| Input | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `paths` | string | false | `` | Space-separated workflow files to scan. Empty (default): every *.yml/*.yaml under .github/workflows and .gitea/workflows. |
-
-
-Neither workflow exposes outputs: the result is the job status. On GitHub,
-zizmor also uploads SARIF results to Code Scanning.
+See the [workflows reference](docs/reference/workflows.md).
 
 ### `ca-updater` image
 
