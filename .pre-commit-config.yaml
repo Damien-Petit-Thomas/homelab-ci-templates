@@ -21,6 +21,7 @@ repos:
       - id: detect-private-key
       - id: no-commit-to-branch
         args: [--branch, main]
+        stages: [pre-commit]
 
   # Secret scanning. Runs on every commit — a leaked credential should
   # never even make it into local history, let alone get pushed.
