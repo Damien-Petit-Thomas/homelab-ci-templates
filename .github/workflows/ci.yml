@@ -105,8 +105,6 @@ jobs:
           echo "OK: rejected with the expected message"
 
 
-  # Single required status check for the ruleset: stable name, independent of
-  # matrix values, and new jobs only need to be added here.
   docs-up-to-date:
     runs-on: ubuntu-24.04
     timeout-minutes: 2
@@ -124,6 +122,9 @@ jobs:
           diff -u docs/reference/workflows.md "${RUNNER_TEMP}/workflows.md" \
             || { echo "::error::docs/reference/workflows.md is stale: run scripts/gen-workflow-reference.sh and commit"; exit 1; }
 
+  # Single required status check for the ruleset: stable name, independent of
+  # matrix values. Every other job of this workflow must be listed in its needs
+  # (enforced by the actionlint job).
   ci-ok:
     name: ci-ok
     if: always()

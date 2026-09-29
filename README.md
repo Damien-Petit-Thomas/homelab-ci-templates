@@ -73,9 +73,9 @@ jobs:
 | `no-raw-secrets.rego` | Any `Secret` object authored directly — should always be an `ExternalSecret` |
 
 
-### `zizmor.yml` inputs
+### Inputs and outputs
 
-Inputs of every reusable workflow: see the [workflows reference](docs/reference/workflows.md).
+See the [workflows reference](docs/reference/workflows.md).
 
 ### `ca-updater` image
 
