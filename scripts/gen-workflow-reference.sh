@@ -24,6 +24,6 @@ for wf in validate-helm zizmor; do
   printf '\n## `%s.yml`\n\n' "$wf"
   printf '| Input | Type | Required | Default | Description |\n|---|---|---|---|---|\n'
   to_json ".github/workflows/${wf}.yml" | jq -r '
-    .on.workflow_call.inputs // {} | to_entries[]
-    | "| `\(.key)` | \(.value.type) | \(.value.required // false) | `\(.value.default // \"\")` | \((.value.description // \"\") | gsub(\"\\n\"; \" \") | gsub(\"\\s+$\"; \"\")) |"'
+    (.on // .["true"] // {}).workflow_call.inputs // {} | to_entries[]
+    | "| `\(.key)` | \(.value.type) | \(.value.required // false) | `\(.value.default // "")` | \((.value.description // "") | gsub("\n"; " ") | gsub("\\s+$"; "")) |"'
 done
