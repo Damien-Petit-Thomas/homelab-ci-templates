@@ -15,8 +15,8 @@ major tag (`@v1`); breaking changes only ship in a new major version.
   producing a corrupt file.
 
 ### Added
-- CI fails when `docs/reference/workflows.md` is not regenerated from the
-  workflows.
+- `scripts/gen-workflow-reference.sh` regenerates `docs/reference/workflows.md`
+  from the reusable workflow inputs.
 - Pre-commit guards: no commits on `main`, action pins must be full 40-character
   commit SHAs.
 
